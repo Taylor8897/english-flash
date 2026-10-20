@@ -575,7 +575,7 @@ svg{display:block}
 .flash-term.phrase{font-size:clamp(30px,4.6vw,44px)}
 .flash-phonetic{font-family:var(--font-word);color:var(--muted);font-size:15px;margin-top:10px;letter-spacing:.5px}
 .flash-divider{width:46px;height:2px;border-radius:2px;background:var(--line-strong);margin:20px auto 16px;transition:.3s}
-.flash-answer{max-width:560px;animation:answerIn .32s ease both}
+.flash-answer{max-width:560px}
 @keyframes answerIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .flash-meaning{font-family:var(--font-serif);font-size:clamp(21px,2.8vw,27px);line-height:1.6;letter-spacing:.5px;color:var(--ink)}
 .flash-example{margin-top:16px;font-family:var(--font-word);font-size:14px;line-height:1.75;color:var(--ink-2);font-style:italic;padding:10px 16px;border-radius:10px;background:rgba(255,252,245,.7);border:1px dashed var(--line)}
@@ -588,7 +588,7 @@ svg{display:block}
 }
 .reveal-btn:hover{background:#fffdf8;border-color:var(--red);color:var(--red);transform:translateY(-1px)}
 .reveal-hint{display:block;margin-top:9px;font-size:10px;letter-spacing:1px;color:var(--faint)}
-.grade-row{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:8px;position:relative;z-index:1;animation:answerIn .3s ease both}
+.grade-row{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:8px;position:relative;z-index:1}
 .grade-btn{
   border-radius:14px;border:1px solid var(--line);background:#fffdf7;padding:13px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;
   transition:.16s;color:var(--ink-2);
@@ -634,7 +634,7 @@ svg{display:block}
   background:
     radial-gradient(800px 420px at 50% -6%, rgba(177,58,42,.12), transparent 66%),
     linear-gradient(175deg,#f8f2e6,#f2e9d8);
-  animation:fadeIn .2s ease both;overflow:auto;
+    overflow:auto;
 }
 .test-top{display:flex;align-items:center;gap:16px;padding:18px clamp(18px,4vw,36px);max-width:980px;width:100%;margin:0 auto;flex:none}
 .test-top .brand-mini{display:flex;align-items:center;gap:9px;font-family:var(--font-serif);font-size:15px;letter-spacing:1.5px;color:var(--ink-2)}
@@ -677,7 +677,7 @@ svg{display:block}
 .quiz-opt.dim{opacity:.5}
 .quiz-spell{display:flex;gap:9px;margin-top:4px}
 .quiz-spell .input{height:46px;font-family:var(--font-word);font-size:19px;letter-spacing:.5px;text-align:center;background:#fffdf8}
-.quiz-feedback{margin-top:20px;border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.8;animation:answerIn .25s ease both}
+.quiz-feedback{margin-top:20px;border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.8}
 .quiz-feedback.ok{background:var(--green-soft);border:1px solid #c6dccb;color:var(--green-deep)}
 .quiz-feedback.bad{background:var(--red-tint);border:1px solid #eccfc7;color:var(--red-deep)}
 .quiz-feedback b{font-family:var(--font-word);font-size:16px;letter-spacing:.3px}
@@ -1063,6 +1063,9 @@ svg{display:block}
   .quiz-scene-sentence{font-size:14px}
   .essay-edit-en{min-height:90px!important}
 }
+.session-overlay{ overflow-y:auto; }
+.flash-stage{ flex:1 0 auto; min-height:0; }
+.flash-card{ margin:auto; }
 </style>
 </head>
 
@@ -3510,7 +3513,7 @@ function parseEssayText(text){
       arr.forEach(function(it){
         if (typeof it === 'string'){ rows.push({ en: it, zh: '', category: detectEssayCategory(it) }); return; }
         if (!it || !it.en) return;
-        rows.push({ en: String(it.en), zh: String(it.zh || ''), category: ESSAY_CATEGORIES.indexOf(it.category) >= 0 ? it.category : detectEssayCategory(it.en) });
+        rows.push({ type: it.type || 'sentence', en: String(it.en), zh: String(it.zh || ''), category: ESSAY_CATEGORIES.indexOf(it.category) >= 0 ? it.category : detectEssayCategory(it.en), note: String(it.note || '') });
       });
       if (rows.length) return finishEssayRows(rows);
     }catch(e){ /* 文本继续 */ }
@@ -3572,10 +3575,12 @@ function finishEssayRows(rows){
     const key = essayKey(r.en);
     const dup = !!existing[key] || !!seen[key];
     seen[key] = true;
-    return {
+        return {
+      type: r.type || 'sentence',
       en: r.en,
       zh: r.zh || '',
       category: ESSAY_CATEGORIES.indexOf(r.category) >= 0 ? r.category : detectEssayCategory(r.en),
+      note: r.note || '',
       dup: dup,
       include: !dup
     };
@@ -3676,7 +3681,7 @@ function sceneWordListHTML(w, reveal){
   if (!words.length) return '<div class="scene-word-list"><div class="sw-row"><b>' + esc(w.term) + '</b><span>' + esc(w.meaning) + '</span></div></div>';
   return '<div class="scene-word-list">' + words.map(function(x){
     return '<div class="sw-row"><b>' + esc(x.term) + '</b><span>' + esc(reveal ? x.meaning : '—') + '</span></div>';
-  }).join('') + '</div>';
+   }).join('') + '</div>';
 }
 
 function renderSession(){
@@ -3724,7 +3729,7 @@ function renderSession(){
       '<button class="grade-btn good" data-act="grade" data-g="good"><span class="glyph">认</span><b>认识</b><span>' + (nextGap ? '+' + nextGap + ' 天' : '归档') + '</span><span class="k">3</span></button>' +
     '</div>' : '';
 
-  root.innerHTML = '' +
+    root.innerHTML = '' +
     '<div class="session-overlay scene-session">' +
       '<div class="session-top">' +
         '<div class="title">场景记忆 <span class="badge">' + sessionState.total + ' 张</span></div>' +
@@ -3747,9 +3752,9 @@ function renderSession(){
             (w.exampleZh ? '<div class="scene-zh">' + esc(w.exampleZh) + '</div>' : '') +
             '<div class="scene-ask">这 ' + words.length + ' 个词分别是什么意思？</div>' +
             '<div class="flash-divider"></div>' +
-            answerHTML +
+            '<div id="session-answer-wrap">' + answerHTML + '</div>' +
           '</div>' +
-          gradeHTML +
+          '<div id="session-grade-wrap">' + gradeHTML + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="session-foot"><kbd>空格</kbd> 显示释义 &nbsp;·&nbsp; <kbd>1</kbd> 忘记 &nbsp;<kbd>2</kbd> 模糊 &nbsp;<kbd>3</kbd> 认识 &nbsp;·&nbsp; 只要求认得出，不要求拼写</div>' +
@@ -3760,7 +3765,30 @@ function renderSession(){
 function sessionReveal(){
   if (!sessionState || sessionState.finished || sessionState.revealed) return;
   sessionState.revealed = true;
-  renderSession();
+  
+  const cur = sessionCurrent();
+  if (!cur || !cur.word) return;
+  const w = cur.word;
+  const len = settings().intervals.length;
+  const nextGap = w.stage < len ? settings().intervals[w.stage] : null;
+  const answerWrap = document.getElementById('session-answer-wrap');
+  const gradeWrap = document.getElementById('session-grade-wrap');
+
+  if (answerWrap) {
+    answerWrap.innerHTML = '<div class="flash-answer scene-answer" style="width:100%">' +
+      sceneWordListHTML(w, true) +
+      '<div class="scene-tools"><button class="speak-btn" data-act="speak-scene">' + ICONS.speaker + '朗读整句</button>' +
+        (w.tag ? '<span class="scene-tag-text">' + esc(w.tag) + '</span>' : '') + '</div>' +
+      '</div>';
+  }
+
+  if (gradeWrap) {
+    gradeWrap.innerHTML = '<div class="grade-row">' +
+      '<button class="grade-btn bad" data-act="grade" data-g="bad"><span class="glyph">忘</span><b>忘记</b><span>重新来</span><span class="k">1</span></button>' +
+      '<button class="grade-btn mid" data-act="grade" data-g="hard"><span class="glyph">糊</span><b>模糊</b><span>明天再见</span><span class="k">2</span></button>' +
+      '<button class="grade-btn good" data-act="grade" data-g="good"><span class="glyph">认</span><b>认识</b><span>' + (nextGap ? '+' + nextGap + ' 天' : '归档') + '</span><span class="k">3</span></button>' +
+    '</div>';
+  }
 }
 
 function applyGrade(w, g){
@@ -3939,19 +3967,22 @@ function renderEssaySession(){
   const kindLabel = wasNew ? '新句' : (cur.item.kind === 'repeat' ? '再巩固' : '到期复习');
   const kindClass = wasNew ? 'new' : (cur.item.kind === 'repeat' ? '' : 'due');
 
-  let answerHTML;
+       let answerHTML;
   if (!essaySessionState.revealed){
     answerHTML = '<div class="reveal-wrap"><button class="reveal-btn" data-act="essay-reveal">' +
       (zh2en ? '显示英文' : '显示中文') + '</button>' +
       '<span class="reveal-hint">' + (zh2en ? '先回忆整句，再点开对照' : '先理解意思，再点开中文') + '</span></div>';
   } else {
     answerHTML = '<div class="flash-answer essay-answer" style="width:100%">' +
-      '<div class="essay-answer-text">' + esc(back) + '</div>' +
-      '<div class="essay-answer-tools">' +
+      '<div class="essay-answer-text" style="white-space:pre-wrap;">' + esc(back) + '</div>' +
+      (e.note ? '<div style="margin-top:16px;padding:12px 16px;background:#fdf8ec;border-left:4px solid #a8741f;border-radius:6px;text-align:left;">' +
+        '<div style="font-size:11px;letter-spacing:1px;color:#a8741f;margin-bottom:6px;font-weight:600;">📌 核心重点 / 注释</div>' +
+        '<div style="font-size:13px;line-height:1.8;color:#4b4237;white-space:pre-wrap;">' + esc(e.note) + '</div>' +
+      '</div>' : '') +
+      '<div class="essay-answer-tools" style="margin-top:16px;">' +
         '<button class="speak-btn" data-act="speak-current">' + ICONS.speaker + '朗读一遍</button>' +
         (e.zh && !zh2en ? '<span class="es-answer-note">' + esc(e.zh) + '</span>' : '') +
       '</div>' +
-      (e.note ? '<div class="flash-source">' + esc(e.note) + '</div>' : '') +
       (e.tag || e.source ? '<div class="flash-source">' + esc([e.tag, e.source].filter(Boolean).join(' · ')) + '</div>' : '') +
       '</div>';
   }
@@ -3974,29 +4005,65 @@ function renderEssaySession(){
               '<span>' + (wasNew ? '首次背诵' : '记忆阶段 ' + stageNum + ' / ' + len) + '</span></div>' +
             '<span>' + (nextGap ? '下次 +' + nextGap + ' 天' : '本轮后掌握') + '</span>' +
           '</div>' +
-          '<div class="flash-main essay-flash-main">' +
+                    '<div class="flash-main essay-flash-main">' +
             '<div class="essay-prompt-label">' + (zh2en ? '中文提示' : '英文原句') + '</div>' +
             '<div class="essay-prompt ' + (zh2en ? 'zh' : 'en') + '">' + esc(front) + '</div>' +
             '<div class="flash-divider"></div>' +
-            answerHTML +
+            '<div id="essay-answer-wrap">' + answerHTML + '</div>' +
           '</div>' +
-          (essaySessionState.revealed ?
-            '<div class="grade-row">' +
-              '<button class="grade-btn bad" data-act="essay-grade" data-g="bad"><span class="glyph">忘</span><b>忘记</b><span>重新来</span><span class="k">1</span></button>' +
-              '<button class="grade-btn mid" data-act="essay-grade" data-g="hard"><span class="glyph">糊</span><b>模糊</b><span>明天再见</span><span class="k">2</span></button>' +
-              '<button class="grade-btn good" data-act="essay-grade" data-g="good"><span class="glyph">背</span><b>背会</b><span>' + (nextGap ? '+' + nextGap + ' 天' : '归档') + '</span><span class="k">3</span></button>' +
-            '</div>' : '') +
+          '<div id="essay-grade-wrap">' +
+            (essaySessionState.revealed ?
+              '<div class="grade-row">' +
+                '<button class="grade-btn bad" data-act="essay-grade" data-g="bad"><span class="glyph">忘</span><b>忘记</b><span>重新来</span><span class="k">1</span></button>' +
+                '<button class="grade-btn mid" data-act="essay-grade" data-g="hard"><span class="glyph">糊</span><b>模糊</b><span>明天再见</span><span class="k">2</span></button>' +
+                '<button class="grade-btn good" data-act="essay-grade" data-g="good"><span class="glyph">背</span><b>背会</b><span>' + (nextGap ? '+' + nextGap + ' 天' : '归档') + '</span><span class="k">3</span></button>' +
+              '</div>' : '') +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="session-foot"><kbd>空格</kbd> 显示答案 &nbsp;·&nbsp; <kbd>1</kbd> 忘记 &nbsp;<kbd>2</kbd> 模糊 &nbsp;<kbd>3</kbd> 背会 &nbsp;·&nbsp; 点「朗读」跟着读一遍</div>' +
     '</div>';
+
   essaySessionState.rendered++;
 }
 
 function essaySessionReveal(){
   if (!essaySessionState || essaySessionState.finished || essaySessionState.revealed) return;
   essaySessionState.revealed = true;
-  renderEssaySession();
+  
+  const cur = essaySessionCurrent();
+  if (!cur || !cur.essay) return;
+  const e = cur.essay;
+  const direction = essaySessionState.direction;
+  const zh2en = direction === 'zh2en' || !e.zh;
+  const back = zh2en ? e.en : (e.zh || e.en);
+  const len = settings().intervals.length;
+  const nextGap = e.stage < len ? settings().intervals[e.stage] : null;
+  const answerWrap = document.getElementById('essay-answer-wrap');
+  const gradeWrap = document.getElementById('essay-grade-wrap');
+
+  if (answerWrap) {
+    answerWrap.innerHTML = '<div class="flash-answer essay-answer" style="width:100%">' +
+      '<div class="essay-answer-text" style="white-space:pre-wrap;">' + esc(back) + '</div>' +
+      (e.note ? '<div style="margin-top:16px;padding:12px 16px;background:#fdf8ec;border-left:4px solid #a8741f;border-radius:6px;text-align:left;">' +
+        '<div style="font-size:11px;letter-spacing:1px;color:#a8741f;margin-bottom:6px;font-weight:600;">📌 核心重点 / 注释</div>' +
+        '<div style="font-size:13px;line-height:1.8;color:#4b4237;white-space:pre-wrap;">' + esc(e.note) + '</div>' +
+      '</div>' : '') +
+      '<div class="essay-answer-tools" style="margin-top:16px;">' +
+        '<button class="speak-btn" data-act="speak-current">' + ICONS.speaker + '朗读一遍</button>' +
+        (e.zh && !zh2en ? '<span class="es-answer-note">' + esc(e.zh) + '</span>' : '') +
+      '</div>' +
+      (e.tag || e.source ? '<div class="flash-source">' + esc([e.tag, e.source].filter(Boolean).join(' · ')) + '</div>' : '') +
+      '</div>';
+  }
+
+  if (gradeWrap) {
+    gradeWrap.innerHTML = '<div class="grade-row">' +
+      '<button class="grade-btn bad" data-act="essay-grade" data-g="bad"><span class="glyph">忘</span><b>忘记</b><span>重新来</span><span class="k">1</span></button>' +
+      '<button class="grade-btn mid" data-act="essay-grade" data-g="hard"><span class="glyph">糊</span><b>模糊</b><span>明天再见</span><span class="k">2</span></button>' +
+      '<button class="grade-btn good" data-act="essay-grade" data-g="good"><span class="glyph">背</span><b>背会</b><span>' + (nextGap ? '+' + nextGap + ' 天' : '归档') + '</span><span class="k">3</span></button>' +
+    '</div>';
+  }
 }
 
 function applyEssayGrade(e, g){
@@ -4191,14 +4258,35 @@ function beginTest(){
     };
   });
 
-  const essayQs = pickedEssays.map(function(e){
+    const essayQs = pickedEssays.map(function(e){
+    let targetEn = e.en;
+    if (e.type === 'article' && targetEn.includes('\n')) {
+      const sentences = targetEn.split(/(?<=[.!?])\s+/);
+      targetEn = sentences[0].trim(); 
+    }
+    let words = targetEn.split(' ').filter(Boolean);
+    let chunks = [];
+    if (words.length > 10) {
+       for (let i = 0; i < words.length; i += 2) {
+           chunks.push(words.slice(i, i + 2).join(' '));
+       }
+    } else {
+       chunks = words.slice();
+    }
+    chunks = shuffle(chunks);
+    let retry = 0;
+    while (chunks.join(' ') === words.join(' ') && chunks.length > 1 && retry < 10) {
+      chunks = shuffle(chunks);
+      retry++;
+    }
     return {
       id: 'essay_' + e.id,
       essayId: e.id,
-      type: 'translate',
+      type: 'wordbank',
       prompt: e.zh,
-      answer: e.en,
-      hint: e.category,
+      answer: targetEn,
+      chunks: chunks,         
+      selected: [],           
       answered: false
     };
   });
@@ -4243,7 +4331,7 @@ function renderTest(){
   const isContext = q.type === 'context';
   let body = '';
 
-  if (isChoice){
+    if (isChoice){
     body = '<div class="quiz-options">' + q.options.map(function(opt, i){
       let cls = '';
       if (q.answered){
@@ -4253,13 +4341,18 @@ function renderTest(){
       }
       return '<button class="quiz-opt ' + cls + '" data-act="pick-option" data-i="' + i + '"' + (q.answered ? ' disabled' : '') + '>' +
         '<span class="letter">' + 'ABCD'[i] + '</span><span>' + esc(opt) + '</span></button>';
-    }).join('') + '</div>';
-  } else if (isTranslate){
-    body = '<div class="quiz-translate">' +
-      '<textarea id="essay-answer" class="input quiz-essay-input" placeholder="按中文提示，默写整句英文…"' + (q.answered ? ' disabled' : '') + '>' + esc(q.given || '') + '</textarea>' +
-      '<div class="quiz-translate-foot">' +
-        '<span class="note">关键词覆盖率 ≥ 75% 即算答对，忽略大小写和标点</span>' +
-        '<button class="btn primary" data-act="submit-translation"' + (q.answered ? ' disabled' : '') + '>提交默写</button>' +
+     }).join('') + '</div>';
+  } else if (q.type === 'wordbank') {
+    body = '<div class="quiz-wordbank" style="text-align:left;margin-top:20px;">' +
+      '<div id="wb-selected-area" style="min-height:80px;padding:12px;border-bottom:2px dashed var(--line-strong);margin-bottom:20px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;background:rgba(255,255,255,0.5);border-radius:8px;">' +
+        (q.selected.length ? q.selected.map((chunk, i) => 
+          '<button class="btn sm" data-act="remove-chunk" data-i="'+i+'" style="background:#fff;border-color:var(--line);box-shadow:0 2px 4px rgba(0,0,0,0.05);font-size:15px;padding:6px 12px;'+(q.answered?'pointer-events:none;opacity:0.8;':'')+'">' + esc(chunk) + '</button>'
+        ).join('') : '<span style="color:var(--faint);font-size:13px;padding:10px;">根据中文提示，点击下方词块进行拼接…</span>') +
+      '</div>' +
+      '<div id="wb-chunks-area" style="display:flex;flex-wrap:wrap;gap:8px;">' +
+        q.chunks.map((chunk, i) => 
+          '<button class="btn sm" data-act="pick-chunk" data-i="'+i+'" ' + (q.chunks[i] === null || q.answered ? 'disabled style="opacity:0.2;pointer-events:none"' : 'style="background:var(--card-2);font-size:15px;padding:6px 12px;"') + '>' + (chunk || '—') + '</button>'
+        ).join('') +
       '</div>' +
     '</div>';
   } else {
@@ -4270,27 +4363,25 @@ function renderTest(){
     '</div>';
   }
 
-  let feedback = '';
+   let feedback = '';
   if (q.answered){
     if (q.correct){
-      feedback = '<div class="quiz-feedback ok"><b>' + (isTranslate ? '背下来了' : '答对了') + '</b>' +
+      feedback = '<div class="quiz-feedback ok"><b>' + (q.type === 'wordbank' ? '拼接正确' : '答对了') + '</b>' +
         (isChoice ? '' : '<span class="answer">' + esc(q.answer) + '</span>') +
-        '<span class="hint">' + (isTranslate
-          ? '关键词覆盖率 ' + Math.round((q.sim || 0) * 100) + '%。记忆阶段不会因为一次测试直接提升。'
-          : isContext ? '认得出来就算过。记忆阶段不会因为一次测试直接提升。'
-          : '记忆阶段不会因为一次测试直接提升，但答错会被打回复习队列。') + '</span></div>';
+        '<span class="hint">' + (q.type === 'wordbank' 
+          ? '语序完全正确。记忆阶段不会因为一次测试直接提升。'
+          : (isContext ? '认得出来就算过。记忆阶段不会因为一次测试直接提升。' : '答对了。')) + '</span></div>';
     } else {
-      feedback = '<div class="quiz-feedback bad"><b>' + (isTranslate ? '还差一些' : '答错了') + '</b>' +
-        '<span class="answer">' + (isTranslate ? '参考：' : '正确答案：') + esc(q.answer) + '</span>' +
-        (isTranslate ? '<span class="hint">关键词覆盖率 ' + Math.round((q.sim || 0) * 100) + '%。这句会退回今日作文背诵。</span>' : '') +
-        '<span class="hint">' + (isTranslate ? '' : (isContext ? '这个场景会被退回今日复习，重新走一遍遗忘曲线。' : '这个词会被退回今日复习，重新走一遍遗忘曲线。')) + '</span></div>';
+      feedback = '<div class="quiz-feedback bad"><b>' + (q.type === 'wordbank' ? '顺序有误' : '答错了') + '</b>' +
+        '<span class="answer">' + (q.type === 'wordbank' ? '参考：' : '正确答案：') + esc(q.answer) + '</span>' +
+        '<span class="hint">' + (q.type === 'wordbank' ? '这句会退回今日作文背诵，请重新梳理语序。' : (isContext ? '这个场景会被退回今日复习。' : '这个词会被退回今日复习。')) + '</span></div>';
     }
   }
 
-  const typeLabel = isContext ? '场景 · 选义' : isChoice ? '英 → 中' : (isTranslate ? '作文 · 中译英' : '中 → 英 拼写');
+    const typeLabel = isContext ? '场景 · 选义' : isChoice ? '英 → 中' : '作文 · 词块拼句';
   const subLabel = isContext ? '根据句子语境，选出划线词最准确的中文释义'
     : isChoice ? '选出最准确的中文释义'
-    : (isTranslate ? '按中文提示，默写整句英文' : '写出对应的英文单词或短语');
+    : '根据中文提示，点击词块拼出完整英文原句';
 
   root.innerHTML = '' +
     '<div class="test-overlay">' +
@@ -4317,20 +4408,40 @@ function renderTest(){
         body + feedback +
         '<div class="quiz-foot">' +
           '<span class="note">' + (testState.forced ? '强制测试中 · 完成后才能离开' : '本次为主动加测') + '</span>' +
+                    (q.type === 'wordbank' && !q.answered ? '<button class="btn primary" data-act="submit-wordbank">提交拼句</button>' : '') +
           (q.answered ? '<button class="btn primary" data-act="next-question">' + (testState.idx + 1 >= total ? '查看结果' : '下一题') + ' ' + ICONS.arrow + '</button>' : '') +
-        '</div>' +
       '</div></div>' +
     '</div>';
 
   if (!q.answered && isTranslate){
-    setTimeout(function(){ const el = $('#essay-answer'); if (el) el.focus(); }, 40);
+    setTimeout(function(){ const el = $('#essay-answer'); if (el) el.focus({ preventScroll: true }); }, 40);
   } else if (!q.answered && !isChoice){
-    setTimeout(function(){ const el = $('#spell-input'); if (el) el.focus(); }, 30);
+    setTimeout(function(){ const el = $('#spell-input'); if (el) el.focus({ preventScroll: true }); }, 30);
   }
   if (testState.startedAt){
     const sec = Math.floor((Date.now() - testState.startedAt) / 1000);
     const el = $('#test-timer');
     if (el) el.textContent = pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60);
+  }
+}
+
+function updateWordbankUI(){
+  const q = currentQuestion();
+  if (!q || q.type !== 'wordbank') return;
+  
+  const selArea = document.getElementById('wb-selected-area');
+  const chunksArea = document.getElementById('wb-chunks-area');
+  
+  if (selArea) {
+    selArea.innerHTML = q.selected.length ? q.selected.map((chunk, i) => 
+      '<button class="btn sm" data-act="remove-chunk" data-i="'+i+'" style="background:#fff;border-color:var(--line);box-shadow:0 2px 4px rgba(0,0,0,0.05);font-size:15px;padding:6px 12px;'+(q.answered?'pointer-events:none;opacity:0.8;':'')+'">' + esc(chunk) + '</button>'
+    ).join('') : '<span style="color:var(--faint);font-size:13px;padding:10px;">根据中文提示，点击下方词块进行拼接…</span>';
+  }
+  
+  if (chunksArea) {
+    chunksArea.innerHTML = q.chunks.map((chunk, i) => 
+      '<button class="btn sm" data-act="pick-chunk" data-i="'+i+'" ' + (q.chunks[i] === null || q.answered ? 'disabled style="opacity:0.2;pointer-events:none"' : 'style="background:var(--card-2);font-size:15px;padding:6px 12px;"') + '>' + (chunk || '—') + '</button>'
+    ).join('');
   }
 }
 
@@ -5162,14 +5273,15 @@ async function confirmEssayImport(){
     const key = essayKey(r.en);
     if (!r.en || existing[key]){ skipped++; return; }
     existing[key] = true;
-    state.essays.push({
+        state.essays.push({
       id: uid('e'),
+      type: r.type || 'sentence',
       en: r.en,
       zh: r.zh || '',
       category: cat !== 'auto' ? cat : r.category,
       tag: tag,
       source: d.source || '手动粘贴',
-      note: '',
+      note: r.note || '', // <----- 把解析到的 note 保存下来
       createdAt: date,
       stage: 0,
       nextReview: null,
@@ -5342,7 +5454,46 @@ function handleAction(act, el){
     case 'delete-essay': deleteEssay(el.dataset.id, false); break;
     case 'delete-essay-modal': deleteEssay(el.dataset.id, true); break;
     case 'reset-essay': resetEssayProgress(el.dataset.id); break;
-    case 'submit-translation': submitTranslation(); break;
+      case 'pick-chunk': {
+      const q = currentQuestion();
+      if (!q || q.answered) return;
+      const idx = Number(el.dataset.i);
+      const chunk = q.chunks[idx];
+      if (!chunk) return;
+      q.selected.push(chunk);
+      q.chunks[idx] = null;
+      updateWordbankUI();
+      break;
+    }
+    case 'remove-chunk': {
+      const q = currentQuestion();
+      if (!q || q.answered) return;
+      const idx = Number(el.dataset.i);
+      const chunk = q.selected[idx];
+      if (!chunk) return;
+      q.selected.splice(idx, 1);
+      const emptyIdx = q.chunks.indexOf(null);
+      if (emptyIdx !== -1) q.chunks[emptyIdx] = chunk;
+      else q.chunks.push(chunk);
+      updateWordbankUI();
+      break;
+    }
+    case 'submit-wordbank': {
+      const q = currentQuestion();
+      if (!q || q.answered || q.type !== 'wordbank') return;
+      if (q.selected.length === 0) { toast('请先点击词块拼接'); return; }
+      const givenStr = q.selected.join(' ');
+      const norm = s => s.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      q.correct = norm(givenStr) === norm(q.answer);
+      q.given = givenStr;
+      q.answered = true;
+      testState.answers.push({
+        id: q.essayId, essayId: q.essayId, type: 'wordbank',
+        answer: q.answer, given: q.given, correct: q.correct
+      });
+      renderTest();
+      break;
+    }
     case 'export-essay-csv': exportEssayCSV(); break;
     case 'test-speak': speakText('Only by taking effective measures can we build a harmonious society.'); break;
     case 'close-session': closeSession(); break;
@@ -5718,7 +5869,38 @@ window.addEventListener('error', function(ev){
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   navigator.serviceWorker.register('sw.js').catch(function(){});
 }
-boot();
-</script>
+
+/* ===== 防“点一下跳回顶部”补丁 ===== */
+(function(){
+  function capture(){
+    var list = [['window', window.scrollY || document.documentElement.scrollTop || 0]];
+    ['.session-overlay', '.test-overlay'].forEach(function(sel){
+      var el = document.querySelector(sel);
+      if (el) list.push([sel, el.scrollTop]);
+    });
+    return list;
+  }
+  function restore(list){
+    list.forEach(function(p){
+      if (p[1] <= 0) return;
+      if (p[0] === 'window'){
+        if ((window.scrollY || document.documentElement.scrollTop || 0) === 0){
+          window.scrollTo(0, p[1]);
+        }
+      } else {
+        var el = document.querySelector(p[0]);
+        if (el && el.scrollTop === 0) el.scrollTop = p[1];
+      }
+    });
+  }
+  document.addEventListener('click', function(){
+    if (!(sessionState || essaySessionState || testState)) return;
+    var list = capture();
+    requestAnimationFrame(function(){ restore(list); });
+    setTimeout(function(){ restore(list); }, 60);
+  }, true);
+})();
+
+boot();</script>
 </body>
 </html>
